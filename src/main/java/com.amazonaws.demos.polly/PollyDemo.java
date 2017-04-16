@@ -18,11 +18,11 @@ public class PollyDemo {
     public static void main(String args[]) throws Exception {
         PollyDemo demo = new PollyDemo();
         String text = "Gallace is an artist who works within the self-imposed confines of a rigorously limited scale and subject matter. She is a painter of small, unpeopled landscapes in which a modest number of elements a house, a barn, a boat; bushes, grass, sky recur with a quietly mesmerising insistence. In focusing on a particularly favoured motif, the idealised form of a windowless white New England cottage, Gallace succeeds in isolating something universally familiar yet utterly mysterious. Though instantly recognisable as a work by Gallace, each individual painting is a unique rumination on stillness and structure.";
-        InputStream audioStream = demo.getAudioInputStream(text);
-        demo.storeInputStreamToTemporaryFile(audioStream);
+        String outputFilePath = demo.getAudioInputStreamAndStoreInputStreamToTemporaryFile(text);
+        System.out.println("File stored in: " + outputFilePath);
     }
 
-    private InputStream getAudioInputStream(String text) {
+    private String getAudioInputStreamAndStoreInputStreamToTemporaryFile(String text) {
         System.out.println("Creating amazon polly client.");
         AmazonPollyClient polly = new AmazonPollyClient(new DefaultAWSCredentialsProviderChain(),
                 new ClientConfiguration());
@@ -42,24 +42,20 @@ public class PollyDemo {
         System.out.println("Amazon Polly service call finished.");
         InputStream audioStream = synthRes.getAudioStream();
         System.out.println("Returning audio stream.");
-        return audioStream;
-    }
-
-    private void storeInputStreamToTemporaryFile(InputStream fileStreamToStore) {
         System.out.println("Storing file stream to temporary file.");
         String tmpFilePath = System.getProperty("java.io.tmpdir") + File.separator + UUID.randomUUID().toString() + ".tmp";
         System.out.println("Temporary file name: " + tmpFilePath);
         try {
-            FileUtils.copyToFile(fileStreamToStore, new File(tmpFilePath));
+            FileUtils.copyToFile(audioStream, new File(tmpFilePath));
             System.out.println("File copied.");
         } catch (IOException cantReadAudioStreamException) {
             System.err.println("Can't copy input stream to file.");
             cantReadAudioStreamException.printStackTrace();
         } finally {
-            if (fileStreamToStore != null) {
+            if (audioStream != null) {
                 try {
                     // outputStream.flush();
-                    fileStreamToStore.close();
+                    audioStream.close();
                     System.out.println("Audio stream closed.");
                 } catch (IOException e) {
                     System.err.println("Can't close audio stream.");
@@ -67,5 +63,6 @@ public class PollyDemo {
                 }
             }
         }
+        return tmpFilePath;
     }
 }
